@@ -1,0 +1,35 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOME=/usr/share/ollama
+      - OLLAMA_MODELS=/usr/share/ollama/models
+    volumes:
+      - ./volumes/ollama:/usr/share/ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      start_period: 10s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./volumes/open-webui:/app/backend/data
+    environment:
+      ENABLE_OCR: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+    depends_on:
+      ollama:
+        condition: service_healthy
+      
